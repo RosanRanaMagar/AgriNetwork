@@ -1,0 +1,191 @@
+{% extends 'network/index.html' %}
+
+{% load static %}
+
+{% block profile %}
+    <div class="profile-view" data-user="{{username.username}}">
+        <div class="cover-image" style="background-image: url(/media/{{username.cover}})"></div>
+        <div class="profile-image" style="background-image: url(/media/{{username.profile_pic}})"></div>
+        <div class="profile-details">
+            <div>
+                {% if user.username == username.username %}
+                <a href="{% url 'profile_edit' %}">
+                    <button class="btn btn-outline-success float-right" id="edit-profile-btn">
+                        Edit Profile
+                    </button>
+                </a> 
+                {% elif is_follower %}
+                    <button class="btn btn-success float-right" onclick="unfollow_user(this,'{{username.username}}','edit_page')" id="following-btn">Following</button>
+                {% else %}
+                    <button class="btn btn-outline-success float-right" onclick="follow_user(this,'{{username.username}}','edit_page')" id="follow-btn">Follow</button>
+                {% endif %}
+            </div>
+            <div class="details-data">
+                <h5>{{username.first_name}} {{username.last_name}}</h5>
+                <div class="grey">@{{username.username}}</div>
+                <div class="bio">
+                    {% if username.bio is not None %}
+                        {{username.bio}}
+                    {% endif %}
+                </div>
+
+                
+                    <!-- Delete Profile Picture button -->
+                    <button class="delete-btn" onclick="deleteProfilePicture()">Remove Profile Picture</button>
+                            
+                    <!-- Delete Cover Picture button -->
+                    <button class="delete-btn" onclick="deleteCoverPicture()">Remove Cover Picture</button>
+              
+
+
+                <style>
+                    /* Basic button styles */
+                    button {
+                        padding: 0px 2px;               /* Add padding to buttons */
+                        font-size: 13px;                   /* Font size */
+                        border-radius: 5px;                /* Rounded corners */
+                        cursor: pointer;                  /* Change cursor to pointer on hover */
+                        transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+                        border: 2px solid transparent;    /* Remove default border */
+                    }
+
+                    /* Delete button style */
+                    button.delete-btn {
+                        background-color: #ff4d4d;         /* Red background for delete */
+                        color: white;                      /* White text */
+                        border: 2px solid #ff4d4d;         /* Red border */
+                    }
+
+                    /* Hover effect for delete button */
+                    button.delete-btn:hover {
+                        background-color: #ff3333;         /* Darker red on hover */
+                        border-color: #ff3333;             /* Darker red border */
+                        transform: scale(1.05);             /* Slightly increase button size */
+                    }
+
+                    /* Focus effect for delete button */
+                    button.delete-btn:focus {
+                        outline: none;                     /* Remove default outline */
+                        box-shadow: 0 0 5px rgba(255, 0, 0, 0.7); /* Red outline on focus */
+                    }
+
+                    /* Optional: Disabled button styles */
+                    button:disabled {
+                        background-color: #d3d3d3;         /* Light grey background for disabled */
+                        color: #a1a1a1;                    /* Light grey text */
+                        border: 2px solid #a1a1a1;         /* Grey border */
+                        cursor: not-allowed;               /* Show 'not-allowed' cursor */
+                    }
+
+                    /* Add spacing between buttons if needed */
+                    button + button {
+                        margin-left: 10px;
+                    }
+
+                </style>
+                <script>
+                    function deleteProfilePicture() {
+                        // Send AJAX request to the server to delete profile picture
+                        if (confirm("Are you sure you want to remove your profile picture?")) {
+                            fetch('/delete_profile_picture/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()  // Include CSRF token for security
+                                },
+                                body: JSON.stringify({
+                                    'action': 'delete_profile_picture'
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert("Profile picture deleted.");
+                                    location.reload(); // Reload the page to reflect the changes
+                                } else {
+                                    alert("Failed to delete profile picture.");
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert("Error deleting profile picture.");
+                            });
+                        }
+                    }
+                    
+                    function deleteCoverPicture() {
+                        // Send AJAX request to the server to delete cover picture
+                        if (confirm("Are you sure you want to remove your cover picture?")) {
+                            fetch('/delete_cover_picture/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()  // Include CSRF token for security
+                                },
+                                body: JSON.stringify({
+                                    'action': 'delete_cover_picture'
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert("Cover picture deleted.");
+                                    location.reload(); // Reload the page to reflect the changes
+                                } else {
+                                    alert("Failed to delete cover picture.");
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert("Error deleting cover picture.");
+                            });
+                        }
+                    }
+                    
+                    // Function to get CSRF token from the cookie
+                    function getCsrfToken() {
+                        let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        return csrfToken;
+                    }
+                    
+                </script>
+
+
+
+
+
+
+                <div class="grey" style="padding: 8px 0px;">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-calendar3" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/>
+                        <path fill-rule="evenodd" d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                    </svg>
+                    &nbsp;Joined {{username.date_joined | date:"F Y"}}
+                </div>
+                <div>
+                    <strong>
+                        {{posts_count}}
+                    </strong>
+                    &nbsp;<span class="grey">Posts</span>
+                    &ensp;
+                    <a href="#">
+                        <strong id="following__count">{{following_count | default:0}}</strong>&nbsp;<span class="grey">Following</span>
+                    </a>
+                    &ensp;
+                    <a href="#">
+                        <strong id="follower__count">{{follower_count | default:0}}</strong>&nbsp;<span class="grey">Followers</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="space"></div>
+{% endblock %}
+
+{% block emptyprofile %}
+    <center>
+        <br>
+        <strong style="font-size: 1.2em;">@{{username}} hasn't posted</strong>
+        <div class="grey" style="font-size: .9em;">When they do, their posts will show up here.</div>
+    </center>
+{% endblock %}

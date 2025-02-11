@@ -1,0 +1,188 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agriculture Quiz Game</title>
+    <link rel="stylesheet" href="{% static 'network/quiz.css' %}">
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Agriculture Quiz</h1>
+    
+        <!-- Categories Section -->
+        <div id="categories">
+            <h2>Select a Category</h2>
+            
+            <hr style="border: 1px solid black;">
+
+            <button class="category-btn" onclick="startGame('weather')">Weather</button>
+            <button class="category-btn" onclick="startGame('crops')">Crops</button>
+            <button class="category-btn" onclick="startGame('soils')">Soils</button>
+            <button class="category-btn" onclick="startGame('plants')">Plants</button>
+            <button class="category-btn" onclick="startGame('kits')">Kits</button>
+        </div>
+    
+        <!-- Question Section -->
+        <div id="question-container" class="hide">
+            <div id="question"></div>
+            <div id="answer-buttons" class="btn-grid"></div>
+        </div>
+    
+        <!-- Controls -->
+        <div class="controls">
+            <a href="{% url 'index' %}" style="text-decoration: none; color: white;">
+                <button id="" class="btn hide">Exit</button>
+            </a>
+            <button id="next-btn" class="btn hide">Next</button>
+        </div>
+    
+        <!-- Score Display -->
+        <div id="score" style="font-size: 20px; margin-bottom: 15px;">Score: 0</div>
+    </div>
+    
+
+
+
+</body>
+</html>
+
+<script>let currentCategory = "";
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let questionPool = []; // Array to hold the randomized questions for the selected category
+    
+    // Sample Questions for different categories
+    const allQuestions = {
+    weather: [
+        { question: "नेपालमा कुन समयमा बढी वर्षा हुन्छ?", options: ["जाडो", "गर्मी", "मनसुन", "बसन्त"], correct: 2 },
+        { question: "नेपालमा हिउँदको समयमा कम पानी पर्ने मुख्य कारण के हो?", options: ["वातावरणीय चक्र", "पश्चिमी वायुको प्रभाव", "तापक्रमको कमी", "कुनै पनि होइन"], correct: 1 },
+        { question: "नेपालमा कुन मौसम कृषिका लागि उत्तम मानिन्छ?", options: ["जाडो", "मनसुन", "बसन्त", "गर्मी"], correct: 1 },
+        { question: "मौसम पूर्वानुमानले किसानलाई कस्तो फाइदा पुर्‍याउँछ?", options: ["सिंचाइ योजना बनाउने", "बाली लगाउने समय थाहा पाउने", "हावाको गति थाहा पाउने", "माथिका सबै"], correct: 3 },
+        { question: "नेपालमा खडेरी मुख्यत: कुन क्षेत्रमा बढी देखिन्छ?", options: ["तराई", "हिमाल", "पहाड", "सबै क्षेत्रमा समान"], correct: 0 }
+    ],
+    crops: [
+        { question: "नेपालमा प्रमुख खाद्यान्न बालीनाली कुन हो?", options: ["धान", "मकै", "गहुँ", "जौ"], correct: 0 },
+        { question: "नेपालमा अलैंची उत्पादनको लागि कुन क्षेत्र प्रसिद्ध छ?", options: ["इलाम", "चितवन", "दाङ", "काठमाण्डौ"], correct: 0 },
+        { question: "नेपालमा गहुँको खेती प्राय: कुन समयमा गरिन्छ?", options: ["हिउँद", "मनसुन", "बसन्त", "गर्मी"], correct: 0 },
+        { question: "नेपालको कुन क्षेत्रमा अदुवा उत्पादन बढी हुन्छ?", options: ["तराई", "पहाड", "हिमाल", "सबै क्षेत्रमा समान"], correct: 1 },
+        { question: "नेपालमा जैविक खेतीलाई बढावा दिन कुन बालीनाली प्रख्यात छ?", options: ["उखु", "कोदो", "मकै", "तोरी"], correct: 2 }
+    ],
+    soils: [
+        { question: "नेपालमा तराईको माटो किन उर्बर मानिन्छ?", options: ["चोपिलो माटो", "दोमट माटो", "बलौटे माटो", "माथिका सबै"], correct: 3 },
+        { question: "पहाडी क्षेत्रको माटोले कुन प्रकारको खेतीलाई प्राथमिकता दिन्छ?", options: ["धान", "अलैंची", "मकै", "जौ"], correct: 1 },
+        { question: "नेपालको माटो परीक्षण केन्द्र कहाँ अवस्थित छ?", options: ["काठमाडौं", "पोखरा", "भक्तपुर", "ललितपुर"], correct: 0 },
+        { question: "कुन प्रकारको माटो नेपालका अधिकांश क्षेत्रमा पाइन्छ?", options: ["दोमट माटो", "बलौटे माटो", "चोपिलो माटो", "बालुवायुक्त माटो"], correct: 0 },
+        { question: "नेपालमा उर्बराशक्ति घट्नबाट बचाउन कस्तो मल प्रयोग गरिन्छ?", options: ["रासायनिक मल", "जैविक मल", "युरिया मल", "डीएपी"], correct: 1 }
+    ],
+    plants: [
+        { question: "नेपालमा चिया उत्पादनको लागि प्रसिद्ध ठाउँ कुन हो?", options: ["इलाम", "पोखरा", "चितवन", "धनगढी"], correct: 0 },
+        { question: "नेपालमा कुन बिरुवा जडीबुटीको लागि प्रख्यात छ?", options: ["यार्सागुम्बा", "धान", "गहुँ", "अदुवा"], correct: 0 },
+        { question: "नेपालमा पाम तेल उत्पादनको सम्भावना भएको क्षेत्र कुन हो?", options: ["तराई", "पहाड", "हिमाल", "सबै"], correct: 0 },
+        { question: "नेपालमा सुक्खा क्षेत्रका लागि उपयुक्त बिरुवा कुन हो?", options: ["क्याक्टस", "गुलाब", "लहरायुक्त बिरुवा", "जौ"], correct: 0 },
+        { question: "नेपालको कुन क्षेत्र कृषिका लागि जैविक खेतीको प्रवर्द्धन गर्दैछ?", options: ["कर्णाली", "बागमती", "सुदूरपश्चिम", "लुम्बिनी"], correct: 0 }
+    ],
+    kits: [
+        { question: "नेपालमा माटो परीक्षण किट किन आवश्यक छ?", options: ["नमी थाहा पाउन", "पोषकतत्व थाहा पाउन", "उर्बराशक्ति थाहा पाउन", "माथिका सबै"], correct: 3 },
+        { question: "नेपालमा किसानले मौसम पूर्वानुमान किटबाट के सिक्न सक्छन्?", options: ["वर्षा", "हावाको गति", "तापक्रम", "माथिका सबै"], correct: 3 },
+        { question: "नेपालमा कृषिका लागि उपयुक्त नमी थाहा पाउन कुन उपकरण प्रयोग गरिन्छ?", options: ["थर्मोमिटर", "हाईग्रोमिटर", "रेन गेज", "ब्यारोमिटर"], correct: 1 },
+        { question: "नेपालमा जैविक मल परीक्षणको लागि कुन किट प्रयोग गरिन्छ?", options: ["माटो परीक्षण किट", "पानी परीक्षण किट", "पीएच परीक्षण किट", "माथिका सबै"], correct: 0 },
+        { question: "नेपालको ग्रामीण क्षेत्रमा सरल तरिकाले प्रयोग गर्न सकिने किट कुन हो?", options: ["माटो परीक्षण किट", "पानी परीक्षण किट", "हावाको मापन किट", "तापक्रम मापन किट"], correct: 0 }
+    ]
+};
+
+    
+    // function to randomize questions
+    function getRandomQuestions(category) {
+        const questions = [...allQuestions[category]];
+    
+        // Randomize the order of questions
+        for (let i = questions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [questions[i], questions[j]] = [questions[j], questions[i]];
+        }
+    
+        return questions;
+    }
+    
+    function startGame(category) {
+        currentCategory = category;
+        currentQuestionIndex = 0;
+        score = 0;
+    
+        // Randomize questions for the selected category
+        questionPool = getRandomQuestions(category);
+    
+        // Hide category buttons and show the quiz container
+        document.getElementById('categories').style.display = 'none';
+        document.getElementById('score').style.display = 'block';
+        document.getElementById('question-container').style.display = 'block';
+    
+        // Display the first question
+        showQuestion();
+    }
+    
+    function showQuestion() {
+        const question = questionPool[currentQuestionIndex];
+        const questionContainer = document.getElementById('question');
+        const answerButtonsContainer = document.getElementById('answer-buttons');
+    
+        questionContainer.textContent = question.question;
+    
+        // Clear previous answers
+        answerButtonsContainer.innerHTML = '';
+    
+        // Create buttons for each option
+        question.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('btn', 'option-btn');
+            button.onclick = () => checkAnswer(index);
+            answerButtonsContainer.appendChild(button);
+        });
+    
+        // Hide Next button initially
+        document.getElementById('next-btn').style.display = 'none';
+    }
+    
+    function checkAnswer(selectedOptionIndex) {
+        const question = questionPool[currentQuestionIndex];
+        const options = document.getElementById('answer-buttons').children;
+    
+        if (selectedOptionIndex === question.correct) {
+            score++;
+            options[selectedOptionIndex].style.backgroundColor = 'green';
+        } else {
+            options[selectedOptionIndex].style.backgroundColor = 'red';
+        }
+    
+        // Disable all options after answering
+        for (let option of options) {
+            option.disabled = true;
+        }
+    
+        // Show Next button
+        document.getElementById('next-btn').style.display = 'block';
+    }
+    
+    document.getElementById('next-btn').addEventListener('click', () => {
+        currentQuestionIndex++;
+    
+        if (currentQuestionIndex < questionPool.length) {
+            showQuestion();
+            document.getElementById('next-btn').style.display = 'none';
+        } else {
+            endGame();
+        }
+    });
+    
+    function endGame() {
+        document.getElementById('question-container').style.display = 'none';
+        document.getElementById('score').textContent = `Your Score: ${score} / ${questionPool.length}`;
+        document.getElementById('score').style.display = 'block';
+    }
+    </script>
+
+

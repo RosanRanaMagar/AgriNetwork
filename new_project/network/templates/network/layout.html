@@ -1,0 +1,587 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}Social AgriNetwork{% endblock %}</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+        <link rel="shortcut icon" href="{% static 'network/Images/logo_copy.png' %}">
+        <script type="text/javascript" src="{% static 'network/layout.js' %}"></script>
+        
+        {% block head %}
+        {% endblock %}
+    </head>
+    <body>
+
+        <div class="popup">
+            <div class="small-popup">
+                <div style="margin-bottom: 10px; font-size: 1.1em;"><strong>Delete Post?</strong></div>
+                <div class="grey" style="font-size: .85em; margin-bottom: 15px;">
+                    This can’t be undone and it will be removed from your profile, the timeline of any accounts that follow you, and from Network search results.
+                </div>
+                <div style="padding: 0px 5%;">
+                    <button class="btn btn-light float-left" onclick="remove_popup()">Cancel</button>
+                    <button class="btn btn-danger float-right" id="delete_post_btn">Delete</button>
+                </div>
+            </div>
+            <div class="large-popup">
+                <div>
+                    <div>
+                        <div class="small-profilepic" style="background-image: url(/media/{{user.profile_pic}});"></div>
+                    </div>
+                    <div class="form-area">
+                        <form action="{% url 'createpost' %}" method="POST" class="newpost" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <textarea name="text" autofocus placeholder="What's happening?" rows="5" id="post-text" spellcheck="true"></textarea>
+                            
+                             <!-- Video preview element and remove button -->
+                             <div id="video-preview-container" style="display:none;">
+                                <video id="videoPreview" width="320" height="240" controls></video>
+                                <button type="button" id="remove-video" class="remove-video-btn">
+                                    <svg fill="#000000" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier">
+                                         <title>cancel</title> 
+                                         <path d="M16 29c-7.18 0-13-5.82-13-13s5.82-13 13-13 13 5.82 13 13-5.82 13-13 13zM21.961 12.209c0.244-0.244 0.244-0.641 0-0.885l-1.328-1.327c-0.244-0.244-0.641-0.244-0.885 0l-3.761 3.761-3.761-3.761c-0.244-0.244-0.641-0.244-0.885 0l-1.328 1.327c-0.244 0.244-0.244 0.641 0 0.885l3.762 3.762-3.762 3.76c-0.244 0.244-0.244 0.641 0 0.885l1.328 1.328c0.244 0.244 0.641 0.244 0.885 0l3.761-3.762 3.761 3.762c0.244 0.244 0.641 0.244 0.885 0l1.328-1.328c0.244-0.244 0.244-0.641 0-0.885l-3.762-3.76 3.762-3.762z"></path>
+                                         </g></svg>
+                                </button>
+                            </div>
+
+                            <input type="hidden" id="img-change" value="false"></input>
+                            <div id='img-div'>
+                                <button id="del-img" type='button'>
+                                    <svg width="1.55em" height="1.55em" viewBox="0 0 24 24" class="r-jwli3a r-4qtqp9 r-yyyyoo r-1q142lx r-50lct3 r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1srniue" fill="#fff">
+                                        <g><path d="M13.414 12l5.793-5.793c.39-.39.39-1.023 0-1.414s-1.023-.39-1.414 0L12 10.586 6.207 4.793c-.39-.39-1.023-.39-1.414 0s-.39 1.023 0 1.414L10.586 12l-5.793 5.793c-.39.39-.39 1.023 0 1.414.195.195.45.293.707.293s.512-.098.707-.293L12 13.414l5.793 5.793c.195.195.45.293.707.293s.512-.098.707-.293c.39-.39.39-1.023 0-1.414L13.414 12z"></path></g>
+                                    </svg>
+                                </button>
+                                <img src="{% static 'network/Images/spinner.gif' %}" id='spinner' height="70px">
+                            </div>
+                            <hr>
+                            <div class="form-action-btns">
+                                <div>
+                                    <input name='picture' accept="image/jpeg,image/png,image/webp,image/gif" type="file" style="display: none;" id="insert-img" data-focusable="true">
+                                    <label for="insert-img" class="icon-btn form-icon-btn"> 
+                                        <svg width="1.1em" height="1.4em" viewBox="0 0 16 16" class="bi bi-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="margin-left:2px">
+                                            <path fill-rule="evenodd" d="M14.002 2h-12a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zm-12-1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12z"/>
+                                            <path d="M10.648 7.646a.5.5 0 0 1 .577-.093L15.002 9.5V14h-14v-2l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71z"/>
+                                            <path fill-rule="evenodd" d="M4.502 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                        </svg><span style="font-size: 0.95em;">&nbsp;Photo</span>
+                                    </label>
+                                    <input type="file" name="video" accept="video/*" id="videoInput" data-focusable="true" style="display:none;">  <!-- Input for video uploads -->
+                                    <label for="videoInput" class="icon-btn form-icon-btn"> 
+                                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" viewBox="0 0 128 128" xml:space="preserve" fill="#000000">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier"> <g> <circle style="fill:#4AB8A1;" cx="64" cy="64" r="64"></circle> 
+                                            <path style="fill:#43A691;" d="M122.724,89.457L94.859,21.491l-0.004-0.002c-1.089-3.115-4.527-4.771-7.644-3.683l-21.094,7.37 l-10.855,3.731L45,32.428v0.002l-10,3.731v0.001l-4.633,1.56l-0.205-0.123c-0.287,0.045-0.605,0.119-0.873,0.208 c-0.238,0.073-0.484,0.167-0.708,0.268c-0.001,0-0.013,0.001-0.014,0.001C26.482,39.018,25,41.094,25,43.52v0.512v0.512V56.52V57 v0.035v0.478v0.035v0.478V73v0.512v0.512v26.498v0.513v0.512c0,1.179,0.402,2.335,1.063,3.339l5.768,14.434 C41.284,124.829,52.269,128,64,128C90.297,128,112.879,112.134,122.724,89.457z">
+                                            </path> <g> <path style="fill:#B3B3B3;" d="M103,57v43.521c0,3.301-2.7,6.479-6,6.479H31c-3.3,0-6-3.178-6-6.479V57H103z"></path>
+                                            <path style="fill:#A6A6A6;" d="M100,57v43.521c0,3.301-2.7,6.479-6,6.479h3c3.3,0,6-3.178,6-6.479V57H100z"></path> <path style="fill:#263740;" d="M62,83.521c0-1.649,1.149-2.293,2.555-1.428l7.892,4.855c1.404,0.863,1.404,2.279,0,3.145 l-7.892,4.855C63.15,95.813,62,95.171,62,93.521V83.521z"></path> 
+                                            <path style="fill:#242424;" d="M30,57.919l69.142-24.148l-4.286-12.272c-1.089-3.115-4.527-4.774-7.644-3.687L30,37.794V57.919z"></path> <polygon style="fill:#FFD464;" points="58.87,47.836 69.552,44.105 45.349,32.433 34.668,36.163 "></polygon> <polygon style="fill:#FFD464;" points="66.118,25.179 55.438,28.909 79.641,40.582 90.321,36.852 "></polygon> <polygon style="fill:#FFD464;" points="76.207,21.655 98.698,32.502 94.968,21.821 86.889,17.925 "></polygon> <g> <rect x="25" y="57" style="fill:#242424;" width="78" height="16"></rect> <g> <polygon style="fill:#FFD464;" points="93.656,57 82.343,57 66.343,73 77.656,73 "></polygon> <polygon style="fill:#FFD464;" points="99.656,73 103,69.18 103,57.865 88.343,73 "></polygon> <polygon style="fill:#FFD464;" points="44.343,73 55.656,73 71.656,57 60.343,57 "></polygon> </g> </g> <path style="fill:#E6E6E6;" d="M30.079,37.601C27.213,38.049,25,40.537,25,43.523v13V73h8.001L49,56.761l0,0L30.079,37.601z"></path> <path style="fill:#D9D9D9;" d="M30.079,37.601c-0.538,0.084-1.041,0.261-1.522,0.478L47,56.761l0,0L31.001,73h2L49,56.761l0,0 L30.079,37.601z"></path> <circle style="fill:#242424;" cx="34" cy="56.522" r="5"></circle> <circle style="fill:#FFFFFF;" cx="34" cy="56.522" r="3"></circle> </g> <path style="fill:#263740;" d="M103,57v43.521c0,3.301-2.7,6.479-6,6.479H31c-3.3,0-6-3.178-6-6.479V57H103z"></path> <path style="fill:#1E2C33;" d="M100,57v43.521c0,3.301-2.7,6.479-6,6.479h3c3.3,0,6-3.178,6-6.479V57H100z"></path> <path style="fill:#F5F5F5;" d="M62,83.521c0-1.649,1.149-2.293,2.555-1.428l7.892,4.855c1.404,0.863,1.404,2.279,0,3.145 l-7.892,4.855C63.15,95.813,62,95.171,62,93.521V83.521z"></path> <path style="fill:#242424;" d="M30,57.919l69.142-24.148l-4.286-12.272c-1.089-3.115-4.527-4.774-7.644-3.687L30,37.794V57.919z"></path> <polygon style="fill:#FFD464;" points="58.87,47.836 69.552,44.105 45.349,32.433 34.668,36.163 "></polygon> <polygon style="fill:#FFD464;" points="66.118,25.179 55.438,28.909 79.641,40.582 90.321,36.852 "></polygon> <polygon style="fill:#FFD464;" points="76.207,21.655 98.698,32.502 94.968,21.821 86.889,17.925 "></polygon> <g> <rect x="25" y="57" style="fill:#242424;" width="78" height="16"></rect> <g> <polygon style="fill:#FFD464;" points="93.656,57 82.343,57 66.343,73 77.656,73 "></polygon> <polygon style="fill:#FFD464;" points="99.656,73 103,69.18 103,57.865 88.343,73 "></polygon> <polygon style="fill:#FFD464;" points="44.343,73 55.656,73 71.656,57 60.343,57 "></polygon> </g> </g> <path style="fill:#263740;" d="M30.079,37.601C27.213,38.049,25,40.537,25,43.523v13V73h8.001L49,56.761l0,0L30.079,37.601z"></path> <path style="fill:#D9D9D9;" d="M30.079,37.601c-0.538,0.084-1.041,0.261-1.522,0.478L47,56.761l0,0L31.001,73h2L49,56.761l0,0 L30.079,37.601z"></path> <circle style="fill:#F5F5F5;" cx="34" cy="56.522" r="5"></circle> <circle style="fill:#263740;" cx="34" cy="56.522" r="3"></circle> <rect x="25" y="73" style="fill:#D9D9D9;" width="78" height="2"></rect> </g> </g></svg><span style="font-size: 0.95em;">
+                                            &nbsp;Video</span>
+                                    </label>
+                                   
+                                </div>
+                                <style>
+                                    svg {
+                                        height: 1.5rem;
+                                      }                                      
+                                </style>
+                                <style>
+                                    #video-preview-container {
+                                        margin-top: 10px;
+                                        display: flex;
+                                        align-items: center;
+                                    }
+                                
+                                    #videoPreview {
+                                        margin-right: 10px;
+                                    }
+                                
+                                    .remove-video-btn {
+                                        background-color: transparent;
+                                        border: none;
+                                        cursor: pointer;
+                                        padding: 5px;
+                                    }
+                                
+                                    .remove-video-btn svg {
+                                        fill: #dc3545; /* Bootstrap danger color */
+                                        width: 1.8em;
+                                        height: 1.8em;
+                                    }
+                                
+                                    .remove-video-btn:hover svg {
+                                        fill: #c82333; /* Darker shade for hover effect */
+                                    }
+                                </style>
+                                <script>
+                                    function checkSubmitButton() {
+                                        const submitButton = document.querySelector('.submit-btn');
+                                        const text = document.getElementById('post-text').value.trim();
+                                        const imageInput = document.getElementById('insert-img');
+                                        const videoInput = document.getElementById('videoInput');
+                                        const textEntered = text.length > 0;
+                                        const imageSelected = imageInput.files.length > 0;
+                                        const videoSelected = videoInput.files.length > 0;
+                                
+                                        if (textEntered || imageSelected || videoSelected) {
+                                            submitButton.disabled = false; // Enable the submit button if there is text, an image, or a video
+                                        } else {
+                                            submitButton.disabled = true; // Disable the submit button if there is no text, image, or video
+                                        }
+                                    }
+                                
+                                    document.getElementById('post-text').addEventListener('input', checkSubmitButton);
+                                    document.getElementById('insert-img').addEventListener('change', checkSubmitButton);
+                                    document.getElementById('videoInput').addEventListener('change', checkSubmitButton);
+                                
+                                    document.getElementById('videoInput').addEventListener('change', function(event) {
+                                        const file = event.target.files[0];
+                                        const videoPreview = document.getElementById('videoPreview');
+                                        const videoPreviewContainer = document.getElementById('video-preview-container');
+                                        if (file) {
+                                            videoPreview.src = URL.createObjectURL(file);
+                                            videoPreviewContainer.style.display = 'flex';
+                                        } else {
+                                            videoPreview.src = '';
+                                            videoPreviewContainer.style.display = 'none';
+                                        }
+                                        checkSubmitButton(); // Check the submit button state
+                                    });
+                                
+                                    document.getElementById('remove-video').addEventListener('click', function() {
+                                        const videoInput = document.getElementById('videoInput');
+                                        const videoPreview = document.getElementById('videoPreview');
+                                        const videoPreviewContainer = document.getElementById('video-preview-container');
+                                        videoInput.value = '';
+                                        videoPreview.src = '';
+                                        videoPreviewContainer.style.display = 'none';
+                                        checkSubmitButton(); // Check the submit button state
+                                    });
+                                </script>
+                                
+                                <div>
+                                    <button class="btn btn-light float-right cancel-post" type="button" onclick="remove_popup()">Cancel</button>
+                                    <input type="submit" class="btn btn-success float-right submit-btn" value="&nbsp;Post&nbsp;" disabled>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="login-popup">
+                <div onclick="remove_popup()" class="icon-btn">
+                    <svg width="1.6em" height="1.6em" viewBox="0 0 16 16" class="bi bi-x" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"/>
+                        <path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"/>
+                    </svg>
+                </div>
+                <center>
+                    <div class="icon-div">
+                        <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="#e0245e" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                        </svg>
+                    </div>
+                    <div class="main_text-div">
+                        <h2></h2>
+                        <div class="grey">
+                            Join Network today to connect with farmer you know.
+                        </div>
+                    </div>
+                    <div class="btn-div">
+                        <button class="btn btn-success btn-block" onclick="goto_register()">Sign Up</button>
+                        <button class="btn btn-outline-success btn-block" onclick="goto_login()">Login</button>
+                    </div>
+                </center>
+            </div>
+        </div>
+        <div class="body" data-page="{{page}}">
+            <div class="sidenav">
+                <!-- --------------------------------------- -->
+                <a href="{% url 'index' %}" class="navbar-brand">
+                    <img src="{% static 'network/Images/logo-removebg-preview.png' %}" height="70px">
+                </a>
+                <div style="height: 100%;">
+                    <div>
+                        <div>
+                            <ul>
+                                <li class="nav-item" id="all_posts">
+                                <a href="{% url 'index' %}" class="nav-link">
+                                    <div>
+                                        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-house" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" d="M8 3.293l-6 6V14.5A1.5 1.5 0 0 0 3.5 16h2A1.5 1.5 0 0 0 7 14.5V10h2v4.5A1.5 1.5 0 0 0 10.5 16h2A1.5 1.5 0 0 0 14 14.5v-5.207l-6-6zm6.854 6.146l-6.646-6.647a.5.5 0 0 0-.708 0L1.146 9.439a.5.5 0 0 0 .708.708L8 3.707l6.146 6.146a.5.5 0 0 0 .708-.708z"/>
+                                        </svg>
+                                        &nbsp;&nbsp;Home
+                                    </div>
+                                </a>
+                                </li>
+                                {% if user.is_authenticated %}
+                                    <li class="nav-item" id="following">
+                                        <a href="{% url 'following' %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-people" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.995-.944v-.002.002zM7.022 13h7.956a.274.274 0 0 0 .014-.002l.008-.002c-.002-.264-.167-1.03-.76-1.72C13.688 10.629 12.718 10 11 10c-1.717 0-2.687.63-3.24 1.276-.593.69-.759 1.457-.76 1.72a1.05 1.05 0 0 0 .022.004zm7.973.056v-.002.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10c-1.668.02-2.615.64-3.16 1.276C1.163 11.97 1 12.739 1 13h3c0-1.045.323-2.086.92-3zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                                                </svg>
+                                                &nbsp;&nbsp;Following
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" id="saved">
+                                        <a href="{% url 'saved' %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-bookmark" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M8 12l5 3V3a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12l5-3zm-4 1.234l4-2.4 4 2.4V3a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10.234z"/>
+                                                  </svg>
+                                                &nbsp;&nbsp;Saved
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" id="profile">
+                                        <a href="{% url 'profile' user.username %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-person" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M13 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM3.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                                </svg>
+                                                &nbsp;&nbsp;Profile
+                                            </div>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a href="javascript:void(0);" class="nav-link" onclick="toggleDropdown()">
+                                          <div>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="1.5rem" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                              <circle cx="12" cy="12" r="3"></circle>
+                                              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 0 1-2 2h-.12a2 2 0 0 1-2-2v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H4a2 2 0 0 1-2-2v-.12a2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V4a2 2 0 0 1 2-2h.12a2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H20a2 2 0 0 1 2 2v.12a2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                            </svg>
+                                            &nbsp;&nbsp;Settings
+                                          </div>
+                                        </a>
+                                      
+                                        <!-- Dropdown Menu -->
+                                        <ul id="settingsDropdown" class="dropdown-menu" style="display: none;">
+                                            <!--
+                                            <li>
+                                                <a href="#">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="1.5em" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                    <line x1="12" y1="16" x2="12" y2="16"></line>
+                                                  </svg>
+                                                  &nbsp;Language Settings
+                                                </a>
+                                              </li> -->
+                                              <li>
+                                                <form method="post" action="#">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="1.5rem" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M3 6h18"></path>
+                                                            <path d="M8 6v12"></path>
+                                                            <path d="M16 6v12"></path>
+                                                            <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                                                        </svg>
+                                                        &nbsp;Delete Account
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                      </li>
+
+
+
+
+
+
+
+
+                                    <li class="nav-item" id="logout">
+                                        <a href="{% url 'logout' %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-door-open" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M1 15.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zM11.5 2H11V1h.5A1.5 1.5 0 0 1 13 2.5V15h-1V2.5a.5.5 0 0 0-.5-.5z"/>
+                                                    <path fill-rule="evenodd" d="M10.828.122A.5.5 0 0 1 11 .5V15h-1V1.077l-6 .857V15H3V1.5a.5.5 0 0 1 .43-.495l7-1a.5.5 0 0 1 .398.117z"/>
+                                                    <path d="M8 9c0 .552.224 1 .5 1s.5-.448.5-1-.224-1-.5-1-.5.448-.5 1z"/>
+                                                </svg>
+                                                &nbsp;&nbsp;Log Out
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" id="logout">
+                                        <a href="{% url 'weather' %}" class="nav-link">
+                                            <div>
+                                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 96" enable-background="new 0 0 96 96" xml:space="preserve" fill="#000000" style="width: 2.5rem; height: 2.5rem;">
+                                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                                    <g id="SVGRepo_iconCarrier"> 
+                                                        <g id="Base" display="none"> </g> 
+                                                        <g id="Dibujo"> 
+                                                            <g> 
+                                                                <path d="M72.556,42.187C73.501,40.271,74,38.166,74,36c0-7.72-6.28-14-14-14c-4.601,0-8.895,2.281-11.496,6.021 C48.336,28.016,48.17,28,48.001,28c-7.664,0-14.219,5.012-16.311,12.184C31.113,40.079,30.508,40,30.001,40 c-6.066,0-11,4.935-11,11s4.934,11,11,11h36c6.065,0,11-4.935,11-11C77.001,47.392,75.247,44.194,72.556,42.187z M60,26 c5.514,0,10,4.486,10,10c0,1.548-0.36,3.05-1.036,4.417C68.019,40.152,67.028,40,66.001,40c-0.508,0-1.112,0.079-1.69,0.184 c-1.608-5.511-5.854-9.735-11.21-11.401C54.939,27.03,57.397,26,60,26z M66.001,58h-36c-3.859,0-7-3.141-7-7s3.141-7,7-7 c0.277,0,0.723,0.068,1.193,0.162V46c0,1.104,0.896,2,2,2c1.104,0,2-0.896,2-2v-3.219C36.267,36.528,41.63,32,48.001,32 c6.372,0,11.736,4.53,12.807,10.786V46c0,1.104,0.896,2,2,2s2-0.896,2-2v-1.837C65.279,44.069,65.727,44,66.001,44 c3.859,0,7,3.141,7,7S69.86,58,66.001,58z"></path> 
+                                                                <path d="M60,18c1.104,0,2-0.896,2-2v-4c0-1.104-0.896-2-2-2c-1.105,0-2,0.896-2,2v4C58,17.104,58.895,18,60,18z"></path> 
+                                                                <path d="M84,34h-4c-1.105,0-2,0.896-2,2s0.895,2,2,2h4c1.104,0,2-0.896,2-2S85.104,34,84,34z"></path> 
+                                                                <path d="M74.143,23.857c0.512,0,1.023-0.195,1.414-0.586l2.828-2.828c0.781-0.781,0.781-2.047,0-2.828 c-0.781-0.781-2.047-0.781-2.828,0l-2.828,2.828c-0.781,0.781-0.781,2.047,0,2.828C73.119,23.662,73.631,23.857,74.143,23.857z"></path> 
+                                                                <path d="M44.443,23.271c0.391,0.391,0.902,0.586,1.414,0.586c0.512,0,1.023-0.195,1.414-0.586c0.781-0.781,0.781-2.047,0-2.828 l-2.828-2.828c-0.781-0.781-2.047-0.781-2.828,0c-0.781,0.781-0.781,2.047,0,2.828L44.443,23.271z"></path> 
+                                                            </g> 
+                                                        </g> 
+                                                    </g>
+                                                </svg>
+                                                
+                                                &nbsp;weather
+                                            </div>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item" id="logout">
+                                        <a href="{% url 'quiz' %}" class="nav-link">
+                                            <div>
+                                                <svg fill="#000000" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 513.856 513.855" xml:space="preserve" width="2rem" height="2rem">
+                                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                                    <g id="SVGRepo_iconCarrier">
+                                                      <g>
+                                                        <g>
+                                                          <path d="M302.37,0.179C179.871-4.066,51.109,67.132,62.235,204.885c0.292,9.6,11.341,52.496-31.806,87.397 c-15.351,12.467-11.289,36.597,10.316,48.489c7.165,3.956,14.658,6.592,22.437,8.425c-1.602,8.627-0.81,17.356,3.344,25.562 c-10.161,19.804,3.41,37.851,15.282,42.116c5.581,2.758,1.275,12.751,1.892,21.13c1.731,24.039,30.399,35.698,48.947,32.788 c33.248-5.388,70.64-3.676,83.131,32.845c2.496,7.292,8.797,9.287,15.6,10.095c15.089,1.849,188.122-17.641,193.321-20.789 c7.252-2.26,13.106-10.38,8.425-19.129c-39.974-74.524,40.034-153.645,55.405-225.233C514.452,130.782,413.994,0.179,302.37,0.179 z M464.119,239.958c-16.696,76.596-89.957,150.648-60.956,230.85c-54.477,7.394-164.512,18.966-164.887,19.022 c-19.609-43.646-65.242-51.48-110.393-44.646c-5.964,1.179-18.725-0.203-18.385-11.836c3.712-25.649-12.756-40.345-19.261-41.924 c-2.445-0.798-1.424-2.001-1.462-1.966c12.263-13.781-6.198-26.339,3.168-44.097c5.708-10.826-1.627-18.027-13.688-19.692 c-15.021-1.625-22.952-7.257-28.157-9.562c-2.521-1.199-3.499-3.393-1.181-5.967c47.73-43.331,39.608-104.688,39.562-105.249 C77.694,71.416,214.071,18.633,303.685,26.422C409.712,35.974,482.039,139.996,464.119,239.958z"></path>
+                                                          <path d="M234.434,138.562c-34.777,20.962-42.051,63.048-27.68,98.871c3.433,8.559,8.95,16.021,13.182,24.163 c12.34,23.755,4.062,21.643,4.172,30.682c0.119,10.593,2.775,29.889,3.895,35.089c0.899,5.667,5.053,10.734,12.469,10.734 c85.45,0,86.872,5.286,91.518-4.854c2.742-4.626,1.762-7.83,1.762-36.054c0-13.508-13.868-1.711,11.648-36.424 c6.5-8.839,12.939-17.367,17.164-27.574c8.993-21.751,7.51-46.492-4.215-66.976C333.564,122.833,274.298,114.545,234.434,138.562z M307.564,312.96c-18.514-0.762-37.043-0.93-55.581-0.98c-0.391-2.859-0.719-5.718-1.003-8.582 c18.92-0.355,37.754,0.549,56.583,2.442V312.96z M331.044,237.458c-7.57,7.914-18.945,20.035-25.526,41.962 c-4.515-0.432-9.028-0.803-13.543-1.117c0.035-5.2-2.895-15.671,2.147-35.224c0.158-0.604,0.219-1.171,0.27-1.731l13.563-13.566 c9.155-9.143-4.718-23.056-13.878-13.883l-6.668,6.66c-2.025-3.41-4.225-6.728-6.723-9.938 c-6.236-8.018-23.539,1.442-13.884,13.888c3.326,4.271,5.799,9.313,8.211,14.203c-3.209,12.868-3.904,25.621-2.392,38.687 c-6.87-0.192-13.749-0.3-20.634-0.173c-1.226-14.051-6.792-23.663-12.172-31.765c-3.255-5.294-37.534-56.939,11.641-86.582 c27.487-16.562,60.175-7.066,81.71,13.733C359.014,207.256,335.275,232.768,331.044,237.458z"></path>
+                                                          <path d="M175.639,185.518c-11.347-0.079-22.63-1.031-33.923-2.054c-11.893-1.082-11.789,17.44,0,18.509 c11.293,1.026,22.576,1.978,33.923,2.057C187.572,204.105,187.567,185.594,175.639,185.518z"></path>
+                                                          <path d="M228.863,109.912c-6.566-9.849-13.238-19.624-20.979-28.604c-7.805-9.06-20.83,4.09-13.088,13.088 c6.708,7.782,12.395,16.316,18.085,24.854C219.474,129.124,235.51,119.862,228.863,109.912z"></path>
+                                                          <path d="M346.076,114.106c4.891-7.825,9.79-15.645,14.391-23.643c5.962-10.367-10.028-19.68-15.975-9.344 c-4.606,8.003-9.501,15.828-14.396,23.644C323.753,114.924,339.769,124.201,346.076,114.106z"></path>
+                                                          <path d="M391.951,192.386c11.796-3.306,23.109-7.863,34.083-13.269c10.704-5.284,1.32-21.236-9.333-15.98 c-9.572,4.717-19.394,8.523-29.666,11.402C375.558,177.753,380.444,195.61,391.951"></path>
+                                                </svg> 
+                                                Play_Quiz_Game
+                                            </div>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="nav-item" id="login">
+                                        <a href="{% url 'login' %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-door-closed" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2zm1 0v13h8V2H4z"/>
+                                                    <path d="M7 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                                    <path fill-rule="evenodd" d="M1 15.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z"/>
+                                                </svg>
+                                                &nbsp;&nbsp;Log In
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" id="Signup">
+                                        <a href="{% url 'register' %}" class="nav-link">
+                                            <div>
+                                                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-person-plus" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                                                    <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+                                                </svg>
+                                                &nbsp;&nbsp;Sign Up
+                                            </div>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% if user.is_authenticated %}
+                            <button id="popup-btn" class="btn btn-success new-post-btn" onclick="createpost()">Create Post</button>
+                        {% endif %}
+                    </div>
+                    <div style="position: absolute; bottom: 10px;">
+                        {% if user.is_authenticated %}    
+                            <li class="nav-item sidenav-user">
+                                <a href="{% url 'profile' user.username %}" class="nav-link">
+                                    <div class="user_account">
+                                        <div class="small-profilepic" style="float: left; background-image: url(/media/{{user.profile_pic}})"></div>
+                                        <div style="height: 2.7vw; margin: auto;">
+                                            <div style="margin-top: 4px;"><strong>{{user.first_name}} {{user.last_name}}</strong></div>
+                                            <div class="grey" style="margin-top: 4px;">@{{ user.username }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if user.is_authenticated %}
+                            <input type="hidden" id="user_is_authenticated" value="True" data-username='{{user.username}}'>
+                        {% else %}
+                            <input type="hidden" id="user_is_authenticated" value="False">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% block body %}
+            {% endblock %}
+
+            <div class="right-div">
+                <nav class="head">
+                    <form action="#">
+                        <div class="search-div">
+                            <div>
+                                <svg width="1em" height="1.6em" viewBox="0 0 16 6" class="bi bi-search" fill="#6d7e8c" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                                    <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                                </svg>
+                            </div>
+                            <input type="text" name="query" id="search-box" placeholder="Search farmers to connect">
+                        </div>
+                    </form>
+                </nav>
+                <div class='right-div-content'>
+                    <div class="space" style="background-color: white;"></div>
+                    {% if user.is_authenticated %}
+                        <div class="suggestion-box">
+                            <div class="suggestion-header">
+                                You might know
+                            </div>
+                            {% for suggestion in suggestions %}
+                                <div class="suggestion-user">
+                                    <div>
+                                        <a href="{% url 'profile' suggestion.username %}">
+                                            <div class="small-profilepic" style="background-image: url(/media/{{suggestion.profile_pic}})"></div>
+                                        </a>
+                                    </div>
+                                    <div class="user-details">
+                                        <a href="{% url 'profile' suggestion.username %}">
+                                            <div id="user-name">
+                                                
+                                                <strong>
+                                                    {{suggestion.first_name}} {{suggestion.last_name}}
+                                                </strong>
+                                            </div>
+                                            <div class="grey">@{{suggestion.username}}</div>
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-success" type="button" onclick="follow_user(this,'{{suggestion.username}}','suggestion')">Follow</button>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                    <div style="text-align: center; border-bottom: .5px solid #e6ecf0; padding: 10px 15px;">
+                                        <span class="grey" style="font-size: .9em;">No suggestions available.</span>
+                                    </div>
+                            {% endfor %}
+                            <div class="suggestion-footer">
+                                <a href="#">Show more</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="guest-box">
+                            <center>
+                                <div class="guest-header">
+                                    <h5>New to Network?</h5>
+                                </div>
+                                <div class="grey guest-content">
+                                    Sign up now to get connected with people you know.
+                                </div>
+                                <div class="guest-btn">
+                                    <button class="btn btn-success btn-block" type="button" onclick="goto_register()">Sign Up</button>
+                                </div>
+                            </center>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>
+
+
+
+<script>
+    function deleteAccount() {
+        if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+            fetch('/delete_account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/n/login';
+                } else {
+                    alert("There was an error deleting your account.");
+                }
+            });
+        }
+    }
+</script>
+<script>
+    function toggleDropdown() {
+        const dropdown = document.getElementById('settingsDropdown');
+        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+          dropdown.style.display = 'block';
+        } else {
+          dropdown.style.display = 'none';
+        }
+      }
+      
+</script>
+<style>
+    .nav-item {
+        position: relative;
+      }
+      
+      .dropdown-menu {
+        position: absolute;
+        top: 60%; /* Position below the settings button */
+        left: 0;
+        background-color: #e0d1d1;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        list-style: none;
+        padding: 30px;
+        margin: 0;
+        z-index: 1000;
+      }
+      
+      .dropdown-menu li {
+        margin: 5px 0;
+      }
+      
+      .dropdown-menu li a {
+        text-decoration: none;
+        color: #000;
+        padding: 5px 10px;
+        display: block;
+        border-radius: 3px;
+      }
+      
+      .dropdown-menu li a:hover {
+        background-color: #77d37a;
+      }
+      
+</style>
+<!-- Include EmojiOneArea CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.1/emojionearea.min.css">
+
+<!-- Include jQuery (required for EmojiOneArea) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<!-- Include EmojiOneArea JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.1/emojionearea.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $("#post-text").emojioneArea({
+            pickerPosition: "bottom"
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        const emojioneAreaInstance = $("#post-text").emojioneArea({
+            pickerPosition: "bottom",
+            filtersPosition: "bottom", // Position the filters at the bottom
+            recentEmojis: false // Disable recent emojis to show all emojis
+        });
+
+        // Ensure the content from EmojiOneArea is included in the form submission
+        $('form.newpost').on('submit', function() {
+            const emojioneAreaInstance = $("#post-text").data("emojioneArea");
+            if (emojioneAreaInstance) {
+                $('#post-text').val(emojioneAreaInstance.getText());
+            }
+        });
+    });
+</script>
+
+

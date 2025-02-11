@@ -1,0 +1,134 @@
+
+
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="container">
+        <!-- User Information -->
+        <h2>Edit Profile</h2>
+
+        <!-- First Name Field -->
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" name="first_name" id="first_name" class="form-control" placeholder="Enter your first name" >
+        </div>
+
+        <!-- Last Name Field -->
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Enter your last name" >
+        </div>
+
+        <!-- Username Field -->
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" class="form-control" placeholder="Choose a username" >
+        </div>
+
+        <!-- Profile Picture Field -->
+        <div class="form-group">
+            <label for="profile_picture">Profile Picture</label>
+            <input type="file" name="profile_picture" id="profile_picture" class="form-control" accept="image/*">
+        </div>
+
+        <!-- Cover Photo Field -->
+        <div class="form-group">
+            <label for="cover_picture">Cover Photo</label>
+            <input type="file" name="cover_picture" id="cover_picture" class="form-control" accept="image/*">
+        </div>
+
+        <!-- Save Changes Button -->
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a href="{% url 'profile' username=user.username %}" class="btn btn-primary" style="text-decoration: none;">Back</a>
+    </div>
+</form>
+
+<!-- CSS Styles for the form -->
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f7fc;
+        color: #333;
+        line-height: 1.6;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        max-width: 600px;
+        width: 100%;
+        padding: 40px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #2c3e50;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        font-size: 16px;
+        color: #2c3e50;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+    }
+
+    .form-group input[type="file"] {
+        padding: 10px;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .form-group input[type="file"]:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        background-color: #5bc7a3;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .btn:hover {
+        background-color: #29b973;
+    }
+</style>
+
+
+
